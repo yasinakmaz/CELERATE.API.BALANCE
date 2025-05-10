@@ -10,12 +10,4 @@
     <PackageReference Include="MediatR" Version="12.5.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\CELERATE.API.API\CELERATE.API.API.csproj" />
-    <ProjectReference Include="..\CELERATE.API.Application\CELERATE.API.Application.csproj" />
-    <ProjectReference Include="..\CELERATE.API.BALANCE.AppHost\CELERATE.API.BALANCE.AppHost.csproj" />
-    <ProjectReference Include="..\CELERATE.API.BALANCE.ServiceDefaults\CELERATE.API.BALANCE.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\CELERATE.API.Infrastructure\CELERATE.API.Infrastructure.csproj" />
-  </ItemGroup>
-
 </Project>

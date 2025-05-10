@@ -15,9 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CELERATE.API.BALANCE.AppHost\CELERATE.API.BALANCE.AppHost.csproj" />
-    <ProjectReference Include="..\CELERATE.API.BALANCE.ServiceDefaults\CELERATE.API.BALANCE.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\CELERATE.API.Infrastructure\CELERATE.API.Infrastructure.csproj" />
+	  <ProjectReference Include="..\CELERATE.API.CORE\CELERATE.API.CORE.csproj" />
   </ItemGroup>
 
 </Project>

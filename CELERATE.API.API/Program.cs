@@ -1,11 +1,17 @@
-using MediatR;
+using CELERATE.API.CORE.Entities;
+using CELERATE.API.API.Models;
+using CELERATE.API.Application.Commands;
+using CELERATE.API.Application.Mappings;
+using CELERATE.API.Infrastructure.Firebase;
+using CELERATE.API.Infrastructure.Firebase.Logging;
+using CELERATE.API.API.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Net;
-using System.Security;
 using System.Text;
+using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,10 +78,12 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddFirebaseServices(builder.Configuration);
 
 // Add MediatR
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateCardCommand).Assembly));
+builder.Services.AddMediatR(cfg => {
+    cfg.RegisterServicesFromAssemblyContaining<CreateCardCommand>();
+});
 
 // Add AutoMapper
-builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // Add JWT Token Generator
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
@@ -98,6 +106,7 @@ builder.Host.UseSerilog((context, config) =>
 
 var app = builder.Build();
 
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
