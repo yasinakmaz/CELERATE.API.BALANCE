@@ -1,0 +1,6 @@
+@CELERATE.API.API_HostAddress = http://localhost:5137
+
+GET {{CELERATE.API.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
