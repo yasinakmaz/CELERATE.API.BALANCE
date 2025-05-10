@@ -1,10 +1,14 @@
-﻿using CELERATE.API.Infrastructure.Firebase.Repositories;
+﻿// CELERATE.API.Infrastructure/Firebase/FirebaseConfiguration.cs
+using CELERATE.API.Infrastructure.Firebase.Repositories;
+using CELERATE.API.CORE.Interfaces;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text;
+using CELERATE.API.Infrastructure.Firebase.Logging;
+using CELERATE.API.Infrastructure.Firebase.Services;
 
 namespace CELERATE.API.Infrastructure.Firebase
 {
@@ -34,6 +38,9 @@ namespace CELERATE.API.Infrastructure.Firebase
             services.AddScoped<IBranchRepository, FirebaseBranchRepository>();
             services.AddScoped<ITransactionRepository, FirebaseTransactionRepository>();
             services.AddScoped<ILogRepository, FirebaseLogRepository>();
+
+            // Add Firebase services
+            services.AddScoped<FirebaseTokenService>();
 
             return services;
         }

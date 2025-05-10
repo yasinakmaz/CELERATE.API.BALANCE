@@ -1,6 +1,8 @@
 ﻿using CELERATE.API.Application.Commands;
+using CELERATE.API.Application.Models;
+using CELERATE.API.CORE.Entities;
+using CELERATE.API.CORE.Interfaces;
 using MediatR;
-using System.Security;
 
 namespace CELERATE.API.Application.Handlers
 {

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Serilog.Context;
+using System.Security.Claims;
 
 namespace CELERATE.API.Infrastructure.Firebase
 {

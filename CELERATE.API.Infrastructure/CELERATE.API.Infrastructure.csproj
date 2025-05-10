@@ -18,9 +18,9 @@
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-	  <ProjectReference Include="..\CELERATE.API.CORE\CELERATE.API.CORE.csproj" />
-	  <ProjectReference Include="..\CELERATE.API.Application\CELERATE.API.Application.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\CELERATE.API.CORE\CELERATE.API.CORE.csproj" />
+		<ProjectReference Include="..\CELERATE.API.Application\CELERATE.API.Application.csproj" />
+	</ItemGroup>
 
 </Project>
