@@ -2,6 +2,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using CELERATE.API.Application.Commands;
+using CELERATE.API.Application.Queries;
+using CELERATE.API.Application.DTOs;
 
 namespace CELERATE.API.API.Controllers
 {

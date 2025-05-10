@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using CELERATE.API.Application.DTOs;
-using OpenTelemetry;
-using CELERATE.API.CORE.Entites;
+using CELERATE.API.CORE.Entities;
+
 
 namespace CELERATE.API.Application.Mappings
 {

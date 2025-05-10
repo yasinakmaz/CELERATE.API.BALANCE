@@ -1,5 +1,10 @@
-﻿using CELERATE.API.CORE.Interfaces;
-using Google.Cloud.Firestore;
+﻿using Google.Cloud.Firestore;
+using CELERATE.API.CORE.Interfaces;
+using CELERATE.API.CORE.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CELERATE.API.Infrastructure.Firebase.Repositories
 {
@@ -13,7 +18,7 @@ namespace CELERATE.API.Infrastructure.Firebase.Repositories
             _db = db;
         }
 
-        public async Task<Transaction> GetByIdAsync(string id)
+        public async Task<CELERATE.API.CORE.Entities.Transaction> GetByIdAsync(string id)
         {
             var docRef = _db.Collection(_collectionName).Document(id);
             var snapshot = await docRef.GetSnapshotAsync();
@@ -21,33 +26,33 @@ namespace CELERATE.API.Infrastructure.Firebase.Repositories
             if (!snapshot.Exists)
                 return null;
 
-            return snapshot.ConvertTo<Transaction>();
+            return snapshot.ConvertTo<CELERATE.API.CORE.Entities.Transaction>();
         }
 
-        public async Task<IReadOnlyList<Transaction>> GetAllAsync()
+        public async Task<IReadOnlyList<CELERATE.API.CORE.Entities.Transaction>> GetAllAsync()
         {
             var query = _db.Collection(_collectionName);
             var snapshot = await query.GetSnapshotAsync();
 
             return snapshot.Documents
-                .Select(d => d.ConvertTo<Transaction>())
+                .Select(d => d.ConvertTo<CELERATE.API.CORE.Entities.Transaction>())
                 .ToList();
         }
 
-        public async Task<string> AddAsync(Transaction entity)
+        public async Task<string> AddAsync(CELERATE.API.CORE.Entities.Transaction entity)
         {
             var docRef = _db.Collection(_collectionName).Document(entity.Id);
             await docRef.SetAsync(entity);
             return entity.Id;
         }
 
-        public async Task UpdateAsync(Transaction entity)
+        public async Task UpdateAsync(CELERATE.API.CORE.Entities.Transaction entity)
         {
             var docRef = _db.Collection(_collectionName).Document(entity.Id);
             await docRef.SetAsync(entity);
         }
 
-        public async Task<IReadOnlyList<Transaction>> GetByUserIdAsync(string userId)
+        public async Task<IReadOnlyList<CELERATE.API.CORE.Entities.Transaction>> GetByUserIdAsync(string userId)
         {
             var query = _db.Collection(_collectionName)
                 .WhereEqualTo("UserId", userId)
@@ -56,11 +61,11 @@ namespace CELERATE.API.Infrastructure.Firebase.Repositories
             var snapshot = await query.GetSnapshotAsync();
 
             return snapshot.Documents
-                .Select(d => d.ConvertTo<Transaction>())
+                .Select(d => d.ConvertTo<CELERATE.API.CORE.Entities.Transaction>())
                 .ToList();
         }
 
-        public async Task<IReadOnlyList<Transaction>> GetByCardIdAsync(string cardId)
+        public async Task<IReadOnlyList<CELERATE.API.CORE.Entities.Transaction>> GetByCardIdAsync(string cardId)
         {
             var query = _db.Collection(_collectionName)
                 .WhereEqualTo("CardId", cardId)
@@ -69,11 +74,11 @@ namespace CELERATE.API.Infrastructure.Firebase.Repositories
             var snapshot = await query.GetSnapshotAsync();
 
             return snapshot.Documents
-                .Select(d => d.ConvertTo<Transaction>())
+                .Select(d => d.ConvertTo<CELERATE.API.CORE.Entities.Transaction>())
                 .ToList();
         }
 
-        public async Task<IReadOnlyList<Transaction>> GetByBranchIdAsync(string branchId)
+        public async Task<IReadOnlyList<CELERATE.API.CORE.Entities.Transaction>> GetByBranchIdAsync(string branchId)
         {
             var query = _db.Collection(_collectionName)
                 .WhereEqualTo("BranchId", branchId)
@@ -82,11 +87,11 @@ namespace CELERATE.API.Infrastructure.Firebase.Repositories
             var snapshot = await query.GetSnapshotAsync();
 
             return snapshot.Documents
-                .Select(d => d.ConvertTo<Transaction>())
+                .Select(d => d.ConvertTo<CELERATE.API.CORE.Entities.Transaction>())
                 .ToList();
         }
 
-        public async Task<IReadOnlyList<Transaction>> GetByOperatorIdAsync(string operatorId)
+        public async Task<IReadOnlyList<CELERATE.API.CORE.Entities.Transaction>> GetByOperatorIdAsync(string operatorId)
         {
             var query = _db.Collection(_collectionName)
                 .WhereEqualTo("OperatorId", operatorId)
@@ -95,11 +100,11 @@ namespace CELERATE.API.Infrastructure.Firebase.Repositories
             var snapshot = await query.GetSnapshotAsync();
 
             return snapshot.Documents
-                .Select(d => d.ConvertTo<Transaction>())
+                .Select(d => d.ConvertTo<CELERATE.API.CORE.Entities.Transaction>())
                 .ToList();
         }
 
-        public async Task<IReadOnlyList<Transaction>> GetByDateRangeAsync(DateTime start, DateTime end)
+        public async Task<IReadOnlyList<CELERATE.API.CORE.Entities.Transaction>> GetByDateRangeAsync(DateTime start, DateTime end)
         {
             var query = _db.Collection(_collectionName)
                 .WhereGreaterThanOrEqualTo("CreatedAt", start)
@@ -109,7 +114,7 @@ namespace CELERATE.API.Infrastructure.Firebase.Repositories
             var snapshot = await query.GetSnapshotAsync();
 
             return snapshot.Documents
-                .Select(d => d.ConvertTo<Transaction>())
+                .Select(d => d.ConvertTo<CELERATE.API.CORE.Entities.Transaction>())
                 .ToList();
         }
     }

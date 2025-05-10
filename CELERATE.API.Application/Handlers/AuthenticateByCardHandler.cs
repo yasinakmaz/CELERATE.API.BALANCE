@@ -39,7 +39,7 @@ namespace CELERATE.API.Application.Handlers
             // Yetkili kart mı kontrol et
             if (!card.IsAuthorized)
             {
-                return new AuthenticationResult { Succeeded = false, ErrorMessage = "MÜŞTERİ KARTI İLE GİRİŞ YAPILAMAZ LÜTFEN YETKİLİ KARTI İLE GİRİŞ YAPINIZ" };
+                return new AuthenticationResult { Succeeded = false, ErrorMessage = "Müşteri Kartı İle Giriş Yapılamaz. Lütfen Yetkili Kartı Kullanın!!!" };
             }
 
             // Login yetkisi var mı kontrol et

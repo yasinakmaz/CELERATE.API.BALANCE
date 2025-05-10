@@ -1,7 +1,14 @@
-﻿using Google.Cloud.Firestore;
-using Microsoft.AspNetCore.SignalR;
+﻿using CELERATE.API.CORE.Interfaces;
+using CELERATE.API.CORE.Entities; // Domain Transaction için
+using Google.Cloud.Firestore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using CELERATE.API.Application.DTOs.ReactOptimized;
+using CELERATE.API.Application.DTOs;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CELERATE.API.Infrastructure.Firebase.Services
 {
@@ -9,19 +16,19 @@ namespace CELERATE.API.Infrastructure.Firebase.Services
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly FirestoreDb _firestoreDb;
-        private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly INotificationService _notificationService;
         private readonly ILogger<FirebaseRealtimeService> _logger;
         private List<FirestoreChangeListener> _listeners = new List<FirestoreChangeListener>();
 
         public FirebaseRealtimeService(
             IServiceProvider serviceProvider,
             FirestoreDb firestoreDb,
-            IHubContext<NotificationHub> hubContext,
+            INotificationService notificationService,
             ILogger<FirebaseRealtimeService> logger)
         {
             _serviceProvider = serviceProvider;
             _firestoreDb = firestoreDb;
-            _hubContext = hubContext;
+            _notificationService = notificationService;
             _logger = logger;
         }
 
@@ -29,36 +36,49 @@ namespace CELERATE.API.Infrastructure.Firebase.Services
         {
             // Transactions collection listener
             var transactionsListener = _firestoreDb.Collection("transactions")
-                .OrderBy("CreatedAt", Query.Direction.Descending)
+                .OrderByDescending("CreatedAt") // Düzeltilmiş sıralama
                 .Limit(1)
                 .Listen(async snapshot =>
                 {
                     if (snapshot.Count > 0)
                     {
-                        var transaction = snapshot.Documents[0].ConvertTo<Transaction>();
+                        try
+                        {
+                            // Domain Transaction'a dönüştürme
+                            var docSnapshot = snapshot.Documents[0];
+                            var transactionData = docSnapshot.ToDictionary();
 
-                        // Notify all clients in the branch group
-                        await _hubContext.Clients
-                            .Group($"Branch_{transaction.BranchId}")
-                            .SendAsync("NewTransaction", new NewTransactionNotification
-                            {
-                                TransactionId = transaction.Id,
-                                UserId = transaction.UserId,
-                                OperatorId = transaction.OperatorId,
-                                BranchId = transaction.BranchId,
-                                Type = transaction.Type.ToString(),
-                                Amount = transaction.Amount
-                            });
+                            // Bu verileri doğrudan almanız gerekiyor
+                            string transactionId = docSnapshot.Id;
+                            string userId = transactionData.ContainsKey("UserId") ? transactionData["UserId"].ToString() : null;
+                            string operatorId = transactionData.ContainsKey("OperatorId") ? transactionData["OperatorId"].ToString() : null;
+                            string branchId = transactionData.ContainsKey("BranchId") ? transactionData["BranchId"].ToString() : null;
+                            string transactionType = transactionData.ContainsKey("Type") ? transactionData["Type"].ToString() : null;
+                            decimal amount = transactionData.ContainsKey("Amount") ? Convert.ToDecimal(transactionData["Amount"]) : 0;
+                            decimal balanceAfter = transactionData.ContainsKey("BalanceAfter") ? Convert.ToDecimal(transactionData["BalanceAfter"]) : 0;
 
-                        // Notify user about balance change
-                        await _hubContext.Clients
-                            .Group($"User_{transaction.UserId}")
-                            .SendAsync("BalanceChanged", new BalanceChangedNotification
-                            {
-                                UserId = transaction.UserId,
-                                NewBalance = transaction.BalanceAfter,
-                                TransactionType = transaction.Type.ToString()
-                            });
+                            // Şube grubuna bildirim gönder
+                            await _notificationService.NotifyBranchTransactionWithDetails(
+                                branchId,
+                                transactionId,
+                                userId,
+                                operatorId,
+                                transactionType,
+                                amount
+                            );
+
+                            // Kullanıcıya bakiye değişikliği bildirimi gönder
+                            await _notificationService.NotifyUserBalanceChangedWithDetails(
+                                userId,
+                                transactionType,
+                                balanceAfter - amount, // Bakiye önceki değeri hesapla
+                                balanceAfter
+                            );
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Firestore transaction dinlerken hata oluştu");
+                        }
                     }
                 });
 

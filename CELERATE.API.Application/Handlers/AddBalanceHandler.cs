@@ -2,6 +2,7 @@
 using CELERATE.API.Application.Commands;
 using CELERATE.API.CORE.Entities;
 using CELERATE.API.CORE.Interfaces;
+using CELERATE.API.Application.Models;
 using MediatR;
 
 namespace CELERATE.API.Application.Handlers

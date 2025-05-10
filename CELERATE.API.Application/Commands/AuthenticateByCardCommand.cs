@@ -1,6 +1,4 @@
-﻿using MediatR;
-
-namespace CELERATE.API.Application.Commands
+﻿namespace CELERATE.API.Application.Commands
 {
     public class AuthenticateByCardCommand : IRequest<AuthenticationResult>
     {

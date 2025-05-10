@@ -1,4 +1,5 @@
-﻿namespace CELERATE.API.CORE.Entities
+﻿using CELERATE.API.CORE.Exceptions;
+namespace CELERATE.API.CORE.Entities
 {
     public class Card
     {

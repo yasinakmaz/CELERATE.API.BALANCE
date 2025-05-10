@@ -3,6 +3,9 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using CELERATE.API.Application.Commands;
+using CELERATE.API.Application.Queries;
+using CELERATE.API.Application.DTOs;
 
 namespace CELERATE.API.API.Controllers
 {

@@ -1,65 +1,59 @@
-// CELERATE.API.API/Program.cs
 using CELERATE.API.API.Hubs;
-using CELERATE.API.Infrastructure.Firebase;
-using CELERATE.API.Application.Mappings;
-using FluentValidation.AspNetCore;
-using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Serilog;
 using System.Text;
-using Microsoft.OpenApi.Models;
-using CELERATE.API.API.Models;
+using System.Reflection;
+
+// AutoMapper için sadece temel namespace
+using AutoMapper;
+
+// Projenizdeki diðer önemli namespace'ler
 using CELERATE.API.Application.Commands;
-using CELERATE.API.Infrastructure.Firebase.Services;
-using Microsoft.AspNetCore.Diagnostics;
+using CELERATE.API.Infrastructure.Firebase;
+using CELERATE.API.Infrastructure.Firebase.Logging;
+using CELERATE.API.CORE.Interfaces;
+using CELERATE.API.Application.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Serilog konfigürasyonu
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
-    .CreateLogger();
+// Add services to the container.
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-builder.Host.UseSerilog();
+// Add aspire service defaults
+builder.AddServiceDefaults();
 
-// Servislerin eklenmesi
-builder.Services.AddControllers()
-    .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<CreateCardCommandValidator>());
-
-// CORS politikasý
-string[] allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string>()?.Split(',')
-                          ?? new[] { "http://localhost:3000" };
-
+// Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CorsPolicy", policy =>
-    {
-        policy.WithOrigins(allowedOrigins)
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
-    });
+    options.AddPolicy("AllowedOrigins",
+        policy => policy.WithOrigins(builder.Configuration["AllowedOrigins"]?.Split(',') ?? new string[0])
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials());
 });
 
-// JWT Authentication
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+// Configure JWT Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
-        };
-    });
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+});
 
-// Authorization policies
+// Configure Authorization Policies
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("CreateCard", policy => policy.RequireClaim("Permission", "CreateCard"));
@@ -72,57 +66,39 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("SpendBalance", policy => policy.RequireClaim("Permission", "SpendBalance"));
 });
 
-// Firebase entegrasyonu
-builder.Services.AddFirebaseServices(builder.Configuration);
-
-// SignalR
-builder.Services.AddSignalR();
-
-// MediatR
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateCardCommand).Assembly));
-
-// AutoMapper
-builder.Services.AddAutoMapper(typeof(MappingProfile));
-
-// Swagger
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+// Add MediatR - AddBalanceCommand tipini doðru þekilde belirtin
+builder.Services.AddMediatR(cfg =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Gördes Belediyesi NFC API", Version = "v1" });
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-    });
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                },
-                Scheme = "oauth2",
-                Name = "Bearer",
-                In = ParameterLocation.Header,
-            },
-            new List<string>()
-        }
-    });
+    cfg.RegisterServicesFromAssembly(typeof(CELERATE.API.Application.Commands.AddBalanceCommand).Assembly);
 });
 
-// DI Container kayýtlarý
-builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-builder.Services.AddHostedService<FirebaseRealtimeService>();
+// AutoMapper'ý manuel olarak yapýlandýrma (çakýþmalarý önlemek için)
+var mapperConfig = new MapperConfiguration(mc =>
+{
+    mc.AddProfile(new MappingProfile());
+});
+
+IMapper mapper = mapperConfig.CreateMapper();
+builder.Services.AddSingleton(mapper);
+
+// Add SignalR
+builder.Services.AddSignalR();
+
+// Add Firebase services
+builder.Services.AddFirebaseServices(builder.Configuration);
+
+// Add JWT Token Generator - Tam namespace kullanýn
+builder.Services.AddScoped<CELERATE.API.CORE.Interfaces.IJwtTokenGenerator, CELERATE.API.Infrastructure.Firebase.JwtTokenGenerator>();
+
+// Add Logging Service - Tam namespace kullanýn
+builder.Services.AddScoped<CELERATE.API.Infrastructure.Firebase.Logging.LoggingService>();
+
+// Add INotificationService ve Hub implementasyonu
+builder.Services.AddScoped<INotificationService, NotificationHub>();
 
 var app = builder.Build();
 
-// Middleware pipeline
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -130,38 +106,21 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("CorsPolicy");
+app.UseCors("AllowedOrigins");
+
+// Add Firebase Auth Middleware
+app.UseMiddleware<FirebaseAuthMiddleware>();
+
+// Add Security Middleware
+app.UseMiddleware<SecurityMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Güvenlik middleware'leri
-app.UseMiddleware<SecurityMiddleware>();
-app.UseMiddleware<FirebaseAuthMiddleware>();
-
-// Exception handling
-app.UseExceptionHandler(appError =>
-{
-    appError.Run(async context =>
-    {
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        context.Response.ContentType = "application/json";
-        var contextFeature = context.Features.Get<IExceptionHandlerFeature>();
-        if (contextFeature != null)
-        {
-            Log.Error($"Something went wrong: {contextFeature.Error}");
-            await context.Response.WriteAsync(new ErrorDetails()
-            {
-                StatusCode = context.Response.StatusCode,
-                Message = "Internal Server Error."
-            }.ToString());
-        }
-    });
-});
-
-// SignalR hub endpoint
+app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 
-app.MapControllers();
+// Map default health check endpoints
+app.MapDefaultEndpoints();
 
 app.Run();

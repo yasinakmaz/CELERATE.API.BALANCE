@@ -1,4 +1,6 @@
 ﻿using Google.Cloud.Firestore;
+using CELERATE.API.CORE.Entities;
+using CELERATE.API.CORE.Interfaces;
 
 namespace CELERATE.API.Infrastructure.Firebase.Repositories
 {
