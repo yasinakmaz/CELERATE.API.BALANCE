@@ -1,22 +1,14 @@
-﻿namespace CELERATE.API.CORE.Entities
+﻿using Google.Cloud.Firestore;
+
+namespace CELERATE.API.CORE.Entities
 {
+    [FirestoreData]
     public class Branch
     {
-        public string Id { get; private set; }
-        public string Code { get; private set; }
-        public string Name { get; private set; }
-        public string Title { get; private set; }
-        public CompanyType CompanyType { get; private set; }
-        public string TaxOffice { get; private set; }
-        public string TaxNumber { get; private set; }
-        public string IdentityNumber { get; private set; }
-        public string Address { get; private set; }
-        public BranchOperationType OperationType { get; private set; }
-        public bool IsActive { get; private set; } = true;
-        public DateTime CreatedAt { get; private set; }
-        public DateTime? LastModifiedAt { get; private set; }
+        // Boş constructor ekleme (Firestore için gerekli)
+        public Branch() { }
 
-        // Yapıcı metod
+        // Mevcut constructor'ı koruyun
         public Branch(string id, string code, string name, string title, CompanyType companyType,
             string taxOffice, string taxNumber, string identityNumber, string address,
             BranchOperationType operationType)
@@ -33,6 +25,45 @@
             OperationType = operationType;
             CreatedAt = DateTime.UtcNow;
         }
+
+        [FirestoreProperty]
+        public string Id { get; set; }
+
+        [FirestoreProperty]
+        public string Code { get; set; }
+
+        [FirestoreProperty]
+        public string Name { get; set; }
+
+        [FirestoreProperty]
+        public string Title { get; set; }
+
+        [FirestoreProperty]
+        public CompanyType CompanyType { get; set; }
+
+        [FirestoreProperty]
+        public string TaxOffice { get; set; }
+
+        [FirestoreProperty]
+        public string TaxNumber { get; set; }
+
+        [FirestoreProperty]
+        public string IdentityNumber { get; set; }
+
+        [FirestoreProperty]
+        public string Address { get; set; }
+
+        [FirestoreProperty]
+        public BranchOperationType OperationType { get; set; }
+
+        [FirestoreProperty]
+        public bool IsActive { get; set; } = true;
+
+        [FirestoreProperty]
+        public DateTime CreatedAt { get; set; }
+
+        [FirestoreProperty]
+        public DateTime? LastModifiedAt { get; set; }
     }
 
     public enum CompanyType

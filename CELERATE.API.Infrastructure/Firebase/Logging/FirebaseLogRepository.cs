@@ -1,6 +1,10 @@
 ﻿using Google.Cloud.Firestore;
 using CELERATE.API.CORE.Interfaces;
-using CELERATE.API.CORE.Entities;
+using CoreLogEntry = CELERATE.API.CORE.Entities.LogEntry;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CELERATE.API.Infrastructure.Firebase.Logging
 {
@@ -17,6 +21,7 @@ namespace CELERATE.API.Infrastructure.Firebase.Logging
         public async Task LogActionAsync(string userId, string action, string details,
             DateTime startTime, DateTime endTime, string branchId)
         {
+            // Burada tam tipe açıkça referans veriyoruz
             var logEntry = new CELERATE.API.CORE.Entities.LogEntry
             {
                 Id = Guid.NewGuid().ToString(),
@@ -40,6 +45,7 @@ namespace CELERATE.API.Infrastructure.Firebase.Logging
 
             var snapshot = await query.GetSnapshotAsync();
 
+            // Dönüş tipini IReadOnlyList<CELERATE.API.CORE.Entities.LogEntry> olarak netleştir
             return snapshot.Documents
                 .Select(d => d.ConvertTo<CELERATE.API.CORE.Entities.LogEntry>())
                 .ToList();

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Reflection;
+using Microsoft.OpenApi.Models;
+using System.Collections.Generic;
 
 // AutoMapper için sadece temel namespace
 using AutoMapper;
@@ -19,7 +21,50 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+// Swagger'ý JWT authorization desteði ile yapýlandýrma
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Gördes Belediyesi NFC Kart API",
+        Version = "v1",
+        Description = "NFC kartlý bakiye iþlemleri yapan API sistemi",
+        Contact = new OpenApiContact
+        {
+            Name = "Gördes Belediyesi",
+            Email = "bilgi@gordes.bel.tr"
+        }
+    });
+
+    // JWT yetkilendirme desteði
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header - Bearer þemasý kullanýlýr. Örnek: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = ParameterLocation.Header,
+            },
+            new List<string>()
+        }
+    });
+});
 
 // Add aspire service defaults
 builder.AddServiceDefaults();
@@ -50,6 +95,23 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+
+    // SignalR için JWT token yönetimi
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -93,8 +155,8 @@ builder.Services.AddScoped<CELERATE.API.CORE.Interfaces.IJwtTokenGenerator, CELE
 // Add Logging Service - Tam namespace kullanýn
 builder.Services.AddScoped<CELERATE.API.Infrastructure.Firebase.Logging.LoggingService>();
 
-// Add INotificationService ve Hub implementasyonu
-builder.Services.AddScoped<INotificationService, NotificationHub>();
+// Add INotificationService ve Hub implementasyonu - ÖNEMLÝ: NotificationHub singleton olarak kayýtlý olmalýdýr!
+builder.Services.AddSingleton<INotificationService, NotificationHub>();
 
 var app = builder.Build();
 
@@ -102,13 +164,21 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Gördes Belediyesi NFC API v1");
+        // JWT UI görünümü için varsayýlan konfigürasyon
+        c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
+        c.RoutePrefix = "swagger";
+        c.DefaultModelsExpandDepth(-1); // Modelleri gizle - API daha temiz görünecek
+    });
 }
 
 app.UseHttpsRedirection();
 app.UseCors("AllowedOrigins");
 
-// Add Firebase Auth Middleware
+// Firebase Auth Middleware'i singleton servis kullanýmý problemi varsa, burada bir deðiþiklik yapmanýz gerekebilir
+// Þu anki hali Middleware içinde scoped servis kullanýmýyla ilgili hata veriyorsa, Middleware'ý deðiþtirin
 app.UseMiddleware<FirebaseAuthMiddleware>();
 
 // Add Security Middleware

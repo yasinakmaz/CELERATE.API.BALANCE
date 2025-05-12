@@ -1,18 +1,14 @@
-﻿namespace CELERATE.API.CORE.Entities
+﻿using Google.Cloud.Firestore;
+
+namespace CELERATE.API.CORE.Entities
 {
+    [FirestoreData]
     public class Transaction
     {
-        public string Id { get; private set; }
-        public string CardId { get; private set; }
-        public string UserId { get; private set; }
-        public string OperatorId { get; private set; }
-        public string BranchId { get; private set; }
-        public TransactionType Type { get; private set; }
-        public decimal Amount { get; private set; }
-        public decimal BalanceAfter { get; private set; }
-        public DateTime CreatedAt { get; private set; }
+        // Boş constructor ekleme (Firestore için gerekli)
+        public Transaction() { }
 
-        // Yapıcı metod
+        // Mevcut constructor'ı koruyun
         public Transaction(string id, string cardId, string userId, string operatorId,
             string branchId, TransactionType type, decimal amount, decimal balanceAfter)
         {
@@ -26,6 +22,33 @@
             BalanceAfter = balanceAfter;
             CreatedAt = DateTime.UtcNow;
         }
+
+        [FirestoreProperty]
+        public string Id { get; set; }
+
+        [FirestoreProperty]
+        public string CardId { get; set; }
+
+        [FirestoreProperty]
+        public string UserId { get; set; }
+
+        [FirestoreProperty]
+        public string OperatorId { get; set; }
+
+        [FirestoreProperty]
+        public string BranchId { get; set; }
+
+        [FirestoreProperty]
+        public TransactionType Type { get; set; }
+
+        [FirestoreProperty]
+        public decimal Amount { get; set; }
+
+        [FirestoreProperty]
+        public decimal BalanceAfter { get; set; }
+
+        [FirestoreProperty]
+        public DateTime CreatedAt { get; set; }
     }
 
     public enum TransactionType

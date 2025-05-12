@@ -1,5 +1,4 @@
-﻿// CELERATE.API.Infrastructure/Firebase/FirebaseConfiguration.cs
-using CELERATE.API.Infrastructure.Firebase.Repositories;
+﻿using CELERATE.API.Infrastructure.Firebase.Repositories;
 using CELERATE.API.CORE.Interfaces;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
@@ -21,44 +20,47 @@ namespace CELERATE.API.Infrastructure.Firebase
             // Firebase credentials
             var projectId = configuration["Firebase:ProjectId"];
 
-            // Initialize Firestore
-            FirestoreDb firestoreDb = FirestoreDb.Create(projectId);
-            services.AddSingleton(firestoreDb);
+            // Önce credential'ı tanımlayın
+            var credential = GetFirebaseCredential(configuration);
+
+            // Firestore ayarları
+            var firestoreSettings = new FirestoreDbBuilder
+            {
+                ProjectId = projectId,
+                Credential = credential
+            }.Build();
+
+            services.AddSingleton(firestoreSettings);
 
             // Firebase Admin SDK
-            var credential = GetFirebaseCredential(configuration);
             FirebaseApp.Create(new AppOptions
             {
                 Credential = credential
             });
 
             // Add repositories
-            services.AddScoped<IUserRepository, FirebaseUserRepository>();
-            services.AddScoped<ICardRepository, FirebaseCardRepository>();
-            services.AddScoped<IBranchRepository, FirebaseBranchRepository>();
-            services.AddScoped<ITransactionRepository, FirebaseTransactionRepository>();
-            services.AddScoped<ILogRepository, FirebaseLogRepository>();
+            services.AddSingleton<IUserRepository, FirebaseUserRepository>();
+            services.AddSingleton<ICardRepository, FirebaseCardRepository>();
+            services.AddSingleton<IBranchRepository, FirebaseBranchRepository>();
+            services.AddSingleton<ITransactionRepository, FirebaseTransactionRepository>();
+            services.AddSingleton<ILogRepository, FirebaseLogRepository>();
 
             // Add Firebase services
-            services.AddScoped<FirebaseTokenService>();
+            services.AddSingleton<FirebaseTokenService>();
 
             return services;
         }
 
         private static GoogleCredential GetFirebaseCredential(IConfiguration configuration)
         {
-            // Private key'i environment variable veya configuration'dan al
-            var privateKeyJson = configuration["Firebase:PrivateKey"];
+            var privateKeyPath = configuration["Firebase:PrivateKey"];
 
-            if (string.IsNullOrEmpty(privateKeyJson))
+            if (string.IsNullOrEmpty(privateKeyPath))
             {
-                throw new ApplicationException("Firebase private key not found in configuration");
+                throw new ApplicationException("Firebase private key path not found in configuration");
             }
 
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(privateKeyJson)))
-            {
-                return GoogleCredential.FromStream(stream);
-            }
+            return GoogleCredential.FromFile(privateKeyPath);
         }
     }
 }

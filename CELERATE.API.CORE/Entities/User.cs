@@ -1,26 +1,15 @@
 ﻿using CELERATE.API.CORE.Exceptions;
+using Google.Cloud.Firestore;
 
 namespace CELERATE.API.CORE.Entities
 {
+    [FirestoreData]
     public class User
     {
-        public string Id { get; private set; }
-        public string FullName { get; private set; }
-        public string PhoneNumber { get; private set; }
-        public string TcIdentityNumber { get; private set; }
-        public Gender Gender { get; private set; }
-        public int Age { get; private set; }
-        public UserType UserType { get; private set; }
-        public UserRole UserRole { get; private set; }
-        public bool IsActive { get; private set; } = true;
-        public string BranchId { get; private set; }
-        public DateTime CreatedAt { get; private set; }
-        public DateTime? LastModifiedAt { get; private set; }
+        // Boş constructor ekleme (Firestore için gerekli)
+        public User() { }
 
-        // NFC Kart bilgileri
-        public string CardId { get; private set; }
-
-        // Yapıcı metod ve davranışlar
+        // Mevcut constructor'ı koruyun
         public User(string id, string fullName, string phoneNumber, string tcIdentityNumber,
             Gender gender, int age, UserType userType, string cardId, string branchId)
         {
@@ -34,10 +23,47 @@ namespace CELERATE.API.CORE.Entities
             CardId = cardId;
             BranchId = branchId;
             CreatedAt = DateTime.UtcNow;
-
-            // Müşteri ise varsayılan olarak müşteri rolü
             UserRole = userType == UserType.Customer ? UserRole.Customer : UserRole.Staff;
         }
+
+        [FirestoreProperty]
+        public string Id { get; set; }
+
+        [FirestoreProperty]
+        public string FullName { get; set; }
+
+        [FirestoreProperty]
+        public string PhoneNumber { get; set; }
+
+        [FirestoreProperty]
+        public string TcIdentityNumber { get; set; }
+
+        [FirestoreProperty]
+        public Gender Gender { get; set; }
+
+        [FirestoreProperty]
+        public int Age { get; set; }
+
+        [FirestoreProperty]
+        public UserType UserType { get; set; }
+
+        [FirestoreProperty]
+        public UserRole UserRole { get; set; }
+
+        [FirestoreProperty]
+        public bool IsActive { get; set; } = true;
+
+        [FirestoreProperty]
+        public string BranchId { get; set; }
+
+        [FirestoreProperty]
+        public DateTime CreatedAt { get; set; }
+
+        [FirestoreProperty]
+        public DateTime? LastModifiedAt { get; set; }
+
+        [FirestoreProperty]
+        public string CardId { get; set; }
 
         // Kullanıcı rollerini güncelleme metodu
         public void UpdateRole(UserRole role)

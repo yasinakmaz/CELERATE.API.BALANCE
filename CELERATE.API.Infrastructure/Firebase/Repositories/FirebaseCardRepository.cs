@@ -1,6 +1,9 @@
 ﻿using Google.Cloud.Firestore;
 using CELERATE.API.CORE.Entities;
 using CELERATE.API.CORE.Interfaces;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CELERATE.API.Infrastructure.Firebase.Repositories
 {
@@ -37,6 +40,13 @@ namespace CELERATE.API.Infrastructure.Firebase.Repositories
 
         public async Task<string> AddAsync(Card entity)
         {
+            // Permissions özelliğini PermissionStrings'e aktarıyoruz
+            if (entity.Permissions != null && entity.Permissions.Any())
+            {
+                // Not: Bu farklı bir yaklaşım gerektirebilir, çünkü Permissions bir ReadOnly Collection
+                // Şu an Card sınıfında PermissionStrings property'si olduğu için bu mantığa gerek kalmayabilir
+            }
+
             var docRef = _db.Collection(_collectionName).Document(entity.Id);
             await docRef.SetAsync(entity);
             return entity.Id;

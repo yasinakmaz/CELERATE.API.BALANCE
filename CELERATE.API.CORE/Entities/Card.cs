@@ -1,21 +1,18 @@
-﻿using CELERATE.API.CORE.Exceptions;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using CELERATE.API.CORE.Exceptions;
+using Google.Cloud.Firestore;
+
 namespace CELERATE.API.CORE.Entities
 {
+    [FirestoreData]
     public class Card
     {
-        public string Id { get; private set; }
-        public string NfcId { get; private set; }
-        public string UserId { get; private set; }
-        public decimal Balance { get; private set; }
-        public bool IsAuthorized { get; private set; }
-        public bool IsActive { get; private set; } = true;
-        public DateTime CreatedAt { get; private set; }
-        public DateTime? LastModifiedAt { get; private set; }
+        // Boş constructor ekleme (Firestore dönüşümü için gerekli)
+        public Card() { }
 
-        private List<Permission> _permissions = new List<Permission>();
-        public IReadOnlyCollection<Permission> Permissions => _permissions.AsReadOnly();
-
-        // Yapıcı metod
+        // Mevcut constructor'ı koruyun
         public Card(string id, string nfcId, string userId, bool isAuthorized)
         {
             Id = id;
@@ -24,9 +21,59 @@ namespace CELERATE.API.CORE.Entities
             IsAuthorized = isAuthorized;
             Balance = 0;
             CreatedAt = DateTime.UtcNow;
+            _permissions = new List<Permission>();
         }
 
-        // Bakiye yükleme
+        // Property'lere public setter ekleyin ve FirestoreProperty niteliği ekleyin
+        [FirestoreProperty]
+        public string Id { get; set; }
+
+        [FirestoreProperty]
+        public string NfcId { get; set; }
+
+        [FirestoreProperty]
+        public string UserId { get; set; }
+
+        [FirestoreProperty]
+        public decimal Balance { get; set; }
+
+        [FirestoreProperty]
+        public bool IsAuthorized { get; set; }
+
+        [FirestoreProperty]
+        public bool IsActive { get; set; } = true;
+
+        [FirestoreProperty]
+        public DateTime CreatedAt { get; set; }
+
+        [FirestoreProperty]
+        public DateTime? LastModifiedAt { get; set; }
+
+        // Permissions alanı için özel işlem
+        private List<Permission> _permissions = new List<Permission>();
+
+        // Serileştirme işlemi için bu property'yi koruyun
+        public IReadOnlyCollection<Permission> Permissions => _permissions.AsReadOnly();
+
+        // Firestore için string listesi olarak izinleri saklamak
+        [FirestoreProperty]
+        public List<string> PermissionStrings
+        {
+            get => _permissions.Select(p => p.ToString()).ToList();
+            set
+            {
+                if (value != null)
+                {
+                    _permissions = value.Select(p => Enum.Parse<Permission>(p)).ToList();
+                }
+                else
+                {
+                    _permissions = new List<Permission>();
+                }
+            }
+        }
+
+        // Metodlar aynı kalabilir
         public void AddBalance(decimal amount)
         {
             if (amount <= 0)
@@ -36,7 +83,6 @@ namespace CELERATE.API.CORE.Entities
             LastModifiedAt = DateTime.UtcNow;
         }
 
-        // Bakiye harcama
         public void SpendBalance(decimal amount)
         {
             if (amount <= 0)
@@ -49,7 +95,6 @@ namespace CELERATE.API.CORE.Entities
             LastModifiedAt = DateTime.UtcNow;
         }
 
-        // Yetki ekleme (sadece yetkili kartlar için)
         public void AddPermission(Permission permission)
         {
             if (!IsAuthorized)

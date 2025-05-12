@@ -1,4 +1,9 @@
-﻿namespace CELERATE.API.CORE.Interfaces
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using CELERATE.API.CORE.Entities;
+
+namespace CELERATE.API.CORE.Interfaces
 {
     public interface ILogRepository
     {
