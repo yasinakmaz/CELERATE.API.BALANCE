@@ -15,14 +15,14 @@ using CELERATE.API.Infrastructure.Firebase;
 using CELERATE.API.Infrastructure.Firebase.Logging;
 using CELERATE.API.CORE.Interfaces;
 using CELERATE.API.Application.Mappings;
+using Google.Api;
+using Google.Cloud.Firestore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-
-FirestoreConverterConfiguration.RegisterConverters();
 
 // Swagger'ý JWT authorization desteði ile yapýlandýrma
 builder.Services.AddSwaggerGen(c =>
@@ -169,21 +169,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Gördes Belediyesi NFC API v1");
-        // JWT UI görünümü için varsayýlan konfigürasyon
         c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
         c.RoutePrefix = "swagger";
-        c.DefaultModelsExpandDepth(-1); // Modelleri gizle - API daha temiz görünecek
+        c.DefaultModelsExpandDepth(-1);
     });
 }
 
 app.UseHttpsRedirection();
 app.UseCors("AllowedOrigins");
 
-// Firebase Auth Middleware'i singleton servis kullanýmý problemi varsa, burada bir deðiþiklik yapmanýz gerekebilir
-// Þu anki hali Middleware içinde scoped servis kullanýmýyla ilgili hata veriyorsa, Middleware'ý deðiþtirin
 app.UseMiddleware<FirebaseAuthMiddleware>();
 
-// Add Security Middleware
 app.UseMiddleware<SecurityMiddleware>();
 
 app.UseAuthentication();
@@ -192,7 +188,6 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 
-// Map default health check endpoints
 app.MapDefaultEndpoints();
 
 app.Run();

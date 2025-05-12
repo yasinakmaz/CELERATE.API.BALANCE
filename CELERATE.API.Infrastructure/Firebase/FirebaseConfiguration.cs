@@ -24,11 +24,9 @@ namespace CELERATE.API.Infrastructure.Firebase
             var credential = GetFirebaseCredential(configuration);
 
             // Create Firestore converter settings
-            var converterRegistry = new ConverterRegistry
-            {
-                // Add our custom decimal converter
-                new DecimalConverter()
-            };
+            var converterRegistry = new ConverterRegistry();
+
+            FirestoreConverterConfiguration.RegisterConverters(converterRegistry);
 
             // Firestore settings with custom converters
             var firestoreDb = new FirestoreDbBuilder

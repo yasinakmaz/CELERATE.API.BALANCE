@@ -5,10 +5,9 @@ namespace CELERATE.API.Infrastructure.Firebase
 {
     public static class FirestoreConverterConfiguration
     {
-        public static void RegisterConverters()
+        public static void RegisterConverters(ConverterRegistry registry)
         {
-            // Register the decimal converter globally
-            ConverterRegistry.Instance.Register(new FirestoreDecimalConverter());
+            registry.Add(new FirestoreDecimalConverter());
         }
     }
 }
