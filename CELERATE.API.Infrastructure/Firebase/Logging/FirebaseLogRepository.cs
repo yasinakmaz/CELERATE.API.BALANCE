@@ -1,11 +1,6 @@
 ﻿using Google.Cloud.Firestore;
 using CELERATE.API.CORE.Interfaces;
-using CoreLogEntry = CELERATE.API.CORE.Entities.LogEntry;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
+using CELERATE.API.CORE.Entities;
 namespace CELERATE.API.Infrastructure.Firebase.Logging
 {
     public class FirebaseLogRepository : ILogRepository
@@ -21,8 +16,7 @@ namespace CELERATE.API.Infrastructure.Firebase.Logging
         public async Task LogActionAsync(string userId, string action, string details,
             DateTime startTime, DateTime endTime, string branchId)
         {
-            // Burada tam tipe açıkça referans veriyoruz
-            var logEntry = new CELERATE.API.CORE.Entities.LogEntry
+            var logEntry = new LogEntry
             {
                 Id = Guid.NewGuid().ToString(),
                 UserId = userId,
@@ -37,7 +31,7 @@ namespace CELERATE.API.Infrastructure.Firebase.Logging
             await docRef.SetAsync(logEntry);
         }
 
-        public async Task<IReadOnlyList<CELERATE.API.CORE.Entities.LogEntry>> GetLogsByUserIdAsync(string userId)
+        public async Task<IReadOnlyList<LogEntry>> GetLogsByUserIdAsync(string userId)
         {
             var query = _db.Collection(_collectionName)
                 .WhereEqualTo("UserId", userId)
@@ -45,13 +39,12 @@ namespace CELERATE.API.Infrastructure.Firebase.Logging
 
             var snapshot = await query.GetSnapshotAsync();
 
-            // Dönüş tipini IReadOnlyList<CELERATE.API.CORE.Entities.LogEntry> olarak netleştir
             return snapshot.Documents
-                .Select(d => d.ConvertTo<CELERATE.API.CORE.Entities.LogEntry>())
+                .Select(d => d.ConvertTo<LogEntry>())
                 .ToList();
         }
 
-        public async Task<IReadOnlyList<CELERATE.API.CORE.Entities.LogEntry>> GetLogsByBranchIdAsync(string branchId)
+        public async Task<IReadOnlyList<LogEntry>> GetLogsByBranchIdAsync(string branchId)
         {
             var query = _db.Collection(_collectionName)
                 .WhereEqualTo("BranchId", branchId)
@@ -60,11 +53,11 @@ namespace CELERATE.API.Infrastructure.Firebase.Logging
             var snapshot = await query.GetSnapshotAsync();
 
             return snapshot.Documents
-                .Select(d => d.ConvertTo<CELERATE.API.CORE.Entities.LogEntry>())
+                .Select(d => d.ConvertTo<LogEntry>())
                 .ToList();
         }
 
-        public async Task<IReadOnlyList<CELERATE.API.CORE.Entities.LogEntry>> GetLogsByDateRangeAsync(DateTime start, DateTime end)
+        public async Task<IReadOnlyList<LogEntry>> GetLogsByDateRangeAsync(DateTime start, DateTime end)
         {
             var query = _db.Collection(_collectionName)
                 .WhereGreaterThanOrEqualTo("StartTime", start)
@@ -74,11 +67,11 @@ namespace CELERATE.API.Infrastructure.Firebase.Logging
             var snapshot = await query.GetSnapshotAsync();
 
             return snapshot.Documents
-                .Select(d => d.ConvertTo<CELERATE.API.CORE.Entities.LogEntry>())
+                .Select(d => d.ConvertTo<LogEntry>())
                 .ToList();
         }
 
-        public async Task<IReadOnlyList<CELERATE.API.CORE.Entities.LogEntry>> GetLogsByActionTypeAsync(string actionType)
+        public async Task<IReadOnlyList<LogEntry>> GetLogsByActionTypeAsync(string actionType)
         {
             var query = _db.Collection(_collectionName)
                 .WhereEqualTo("Action", actionType)
@@ -87,7 +80,7 @@ namespace CELERATE.API.Infrastructure.Firebase.Logging
             var snapshot = await query.GetSnapshotAsync();
 
             return snapshot.Documents
-                .Select(d => d.ConvertTo<CELERATE.API.CORE.Entities.LogEntry>())
+                .Select(d => d.ConvertTo<LogEntry>())
                 .ToList();
         }
     }

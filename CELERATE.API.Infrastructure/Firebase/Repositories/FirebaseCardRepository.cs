@@ -1,6 +1,8 @@
-﻿using Google.Cloud.Firestore;
+﻿// File: CELERATE.API.Infrastructure/Firebase/Repositories/FirebaseCardRepository.cs
+using Google.Cloud.Firestore;
 using CELERATE.API.CORE.Entities;
 using CELERATE.API.CORE.Interfaces;
+using CELERATE.API.Infrastructure.Firebase.Converters;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,7 +27,7 @@ namespace CELERATE.API.Infrastructure.Firebase.Repositories
             if (!snapshot.Exists)
                 return null;
 
-            return snapshot.ConvertTo<Card>();
+            return CardConverter.FromFirestore(snapshot);
         }
 
         public async Task<IReadOnlyList<Card>> GetAllAsync()
@@ -33,29 +35,25 @@ namespace CELERATE.API.Infrastructure.Firebase.Repositories
             var query = _db.Collection(_collectionName);
             var snapshot = await query.GetSnapshotAsync();
 
-            return snapshot.Documents
-                .Select(d => d.ConvertTo<Card>())
-                .ToList();
+            var result = new List<Card>();
+            foreach (var doc in snapshot.Documents)
+            {
+                result.Add(CardConverter.FromFirestore(doc));
+            }
+            return result;
         }
 
         public async Task<string> AddAsync(Card entity)
         {
-            // Permissions özelliğini PermissionStrings'e aktarıyoruz
-            if (entity.Permissions != null && entity.Permissions.Any())
-            {
-                // Not: Bu farklı bir yaklaşım gerektirebilir, çünkü Permissions bir ReadOnly Collection
-                // Şu an Card sınıfında PermissionStrings property'si olduğu için bu mantığa gerek kalmayabilir
-            }
-
             var docRef = _db.Collection(_collectionName).Document(entity.Id);
-            await docRef.SetAsync(entity);
+            await docRef.SetAsync(CardConverter.ToFirestore(entity));
             return entity.Id;
         }
 
         public async Task UpdateAsync(Card entity)
         {
             var docRef = _db.Collection(_collectionName).Document(entity.Id);
-            await docRef.SetAsync(entity);
+            await docRef.SetAsync(CardConverter.ToFirestore(entity));
         }
 
         public async Task<Card> GetByNfcIdAsync(string nfcId)
@@ -63,9 +61,11 @@ namespace CELERATE.API.Infrastructure.Firebase.Repositories
             var query = _db.Collection(_collectionName).WhereEqualTo("NfcId", nfcId);
             var snapshot = await query.GetSnapshotAsync();
 
-            return snapshot.Documents
-                .Select(d => d.ConvertTo<Card>())
-                .FirstOrDefault();
+            var document = snapshot.Documents.FirstOrDefault();
+            if (document == null)
+                return null;
+
+            return CardConverter.FromFirestore(document);
         }
 
         public async Task<IReadOnlyList<Card>> GetByUserIdAsync(string userId)
@@ -73,9 +73,12 @@ namespace CELERATE.API.Infrastructure.Firebase.Repositories
             var query = _db.Collection(_collectionName).WhereEqualTo("UserId", userId);
             var snapshot = await query.GetSnapshotAsync();
 
-            return snapshot.Documents
-                .Select(d => d.ConvertTo<Card>())
-                .ToList();
+            var result = new List<Card>();
+            foreach (var doc in snapshot.Documents)
+            {
+                result.Add(CardConverter.FromFirestore(doc));
+            }
+            return result;
         }
     }
 }

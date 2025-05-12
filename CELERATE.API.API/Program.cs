@@ -22,6 +22,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+FirestoreConverterConfiguration.RegisterConverters();
+
 // Swagger'ý JWT authorization desteði ile yapýlandýrma
 builder.Services.AddSwaggerGen(c =>
 {

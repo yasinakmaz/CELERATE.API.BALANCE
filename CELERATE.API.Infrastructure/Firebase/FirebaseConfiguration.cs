@@ -1,13 +1,15 @@
-﻿using CELERATE.API.Infrastructure.Firebase.Repositories;
-using CELERATE.API.CORE.Interfaces;
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
-using Google.Cloud.Firestore;
+﻿using Google.Cloud.Firestore;
+using Google.Cloud.Firestore.Converters;
+using CELERATE.API.Infrastructure.Firebase.Converters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Text;
+using Google.Apis.Auth.OAuth2;
+using System.Collections.Generic;
+using CELERATE.API.CORE.Interfaces;
 using CELERATE.API.Infrastructure.Firebase.Logging;
+using CELERATE.API.Infrastructure.Firebase.Repositories;
 using CELERATE.API.Infrastructure.Firebase.Services;
+using FirebaseAdmin;
 
 namespace CELERATE.API.Infrastructure.Firebase
 {
@@ -19,18 +21,24 @@ namespace CELERATE.API.Infrastructure.Firebase
         {
             // Firebase credentials
             var projectId = configuration["Firebase:ProjectId"];
-
-            // Önce credential'ı tanımlayın
             var credential = GetFirebaseCredential(configuration);
 
-            // Firestore ayarları
-            var firestoreSettings = new FirestoreDbBuilder
+            // Create Firestore converter settings
+            var converterRegistry = new ConverterRegistry
+            {
+                // Add our custom decimal converter
+                new DecimalConverter()
+            };
+
+            // Firestore settings with custom converters
+            var firestoreDb = new FirestoreDbBuilder
             {
                 ProjectId = projectId,
-                Credential = credential
+                Credential = credential,
+                ConverterRegistry = converterRegistry
             }.Build();
 
-            services.AddSingleton(firestoreSettings);
+            services.AddSingleton(firestoreDb);
 
             // Firebase Admin SDK
             FirebaseApp.Create(new AppOptions
