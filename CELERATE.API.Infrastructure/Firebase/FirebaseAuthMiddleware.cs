@@ -33,7 +33,6 @@ namespace CELERATE.API.Infrastructure.Firebase
                         new Claim(ClaimTypes.NameIdentifier, decodedToken.Uid),
                     };
 
-                        // Add custom claims
                         foreach (var claim in decodedToken.Claims)
                         {
                             if (claim.Key == "role")
@@ -59,7 +58,6 @@ namespace CELERATE.API.Infrastructure.Firebase
                 }
                 catch (FirebaseAuthException)
                 {
-                    // Token validation failed, user remains unauthenticated
                 }
             }
 

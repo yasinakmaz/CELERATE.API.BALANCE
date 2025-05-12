@@ -30,7 +30,6 @@ namespace CELERATE.API.API.Controllers
 
         [HttpPost("authorized")]
         [Authorize(Policy = "CreateAuthorizedCard")]
-        [AllowAnonymous]
         public async Task<IActionResult> CreateAuthorizedCard([FromBody] CreateAuthorizedCardCommand command)
         {
             var cardId = await _mediator.Send(command);

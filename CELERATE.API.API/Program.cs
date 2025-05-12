@@ -26,6 +26,11 @@ using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Loglama yapýlandýrmasý
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+builder.Logging.SetMinimumLevel(LogLevel.Debug);
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -191,12 +196,15 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("AllowedOrigins");
 
-// Özel middlewares
+// ÖNEMLÝ: Middleware sýralamasý düzeltildi
+// Önce standart Authentication middleware çalýþmalý
+app.UseAuthentication();
+
+// Sonra özel middlewares
 app.UseMiddleware<FirebaseAuthMiddleware>();
 app.UseMiddleware<SecurityMiddleware>();
 
-// Authentication ve Authorization middleware
-app.UseAuthentication();
+// Son olarak Authorization middleware
 app.UseAuthorization();
 
 // Controller ve SignalR yapýlandýrmasý
