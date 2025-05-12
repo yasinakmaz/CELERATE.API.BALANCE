@@ -53,9 +53,70 @@ namespace CELERATE.API.Infrastructure.Firebase.Repositories
             var query = _db.Collection(_collectionName).WhereEqualTo("CardId", cardId);
             var snapshot = await query.GetSnapshotAsync();
 
-            return snapshot.Documents
-                .Select(d => d.ConvertTo<User>())
-                .FirstOrDefault();
+            var document = snapshot.Documents.FirstOrDefault();
+            if (document == null)
+                return null;
+
+            // Manuel dönüşüm yap
+            var data = document.ToDictionary();
+
+            var user = new User();
+            user.Id = document.Id;
+            user.FullName = GetStringValue(data, "FullName");
+            user.PhoneNumber = GetStringValue(data, "PhoneNumber");
+            user.TcIdentityNumber = GetStringValue(data, "TcIdentityNumber");
+
+            // Gender enum'ını güvenli şekilde dönüştür
+            if (Enum.TryParse<Gender>(GetStringValue(data, "Gender"), true, out var gender))
+            {
+                user.Gender = gender;
+            }
+            else
+            {
+                user.Gender = Gender.Other; // Varsayılan değer
+            }
+
+            user.Age = GetIntValue(data, "Age");
+
+            // Benzer şekilde diğer enum ve property'leri de ayarla
+            if (Enum.TryParse<UserType>(GetStringValue(data, "UserType"), true, out var userType))
+            {
+                user.UserType = userType;
+            }
+
+            if (Enum.TryParse<UserRole>(GetStringValue(data, "UserRole"), true, out var userRole))
+            {
+                user.UserRole = userRole;
+            }
+
+            user.IsActive = GetBoolValue(data, "IsActive", true);
+            user.BranchId = GetStringValue(data, "BranchId");
+            user.CardId = GetStringValue(data, "CardId");
+
+            return user;
+        }
+        private string GetStringValue(Dictionary<string, object> data, string key)
+        {
+            return data.TryGetValue(key, out var value) ? value?.ToString() : null;
+        }
+
+        private int GetIntValue(Dictionary<string, object> data, string key, int defaultValue = 0)
+        {
+            if (data.TryGetValue(key, out var value))
+            {
+                if (value is long longValue)
+                    return (int)longValue;
+                if (value is int intValue)
+                    return intValue;
+                if (int.TryParse(value?.ToString(), out var result))
+                    return result;
+            }
+            return defaultValue;
+        }
+
+        private bool GetBoolValue(Dictionary<string, object> data, string key, bool defaultValue = false)
+        {
+            return data.TryGetValue(key, out var value) && value is bool boolValue ? boolValue : defaultValue;
         }
 
         public async Task<User> GetByPhoneNumberAsync(string phoneNumber)

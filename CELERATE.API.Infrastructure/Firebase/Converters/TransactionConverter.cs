@@ -86,7 +86,14 @@ namespace CELERATE.API.Infrastructure.Firebase.Converters
         {
             if (data.TryGetValue(key, out var value) && value != null)
             {
-                return (DateTime)value;
+                if (value is Google.Cloud.Firestore.Timestamp timestamp)
+                {
+                    return timestamp.ToDateTime();
+                }
+                else if (value is DateTime dateTime)
+                {
+                    return dateTime;
+                }
             }
             return defaultValue;
         }

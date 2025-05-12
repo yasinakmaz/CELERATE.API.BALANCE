@@ -2,21 +2,27 @@ using CELERATE.API.API.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using System.Reflection;
 using Microsoft.OpenApi.Models;
 using System.Collections.Generic;
 
-// AutoMapper için sadece temel namespace
+// Application katmaný için gerekli namespace'ler
 using AutoMapper;
-
-// Projenizdeki diðer önemli namespace'ler
 using CELERATE.API.Application.Commands;
+using CELERATE.API.Application.Mappings;
+using CELERATE.API.Application.Handlers;
+
+// Infrastructure katmaný için gerekli namespace'ler
 using CELERATE.API.Infrastructure.Firebase;
 using CELERATE.API.Infrastructure.Firebase.Logging;
+using CELERATE.API.Infrastructure.Firebase.Services;
+using CELERATE.API.Infrastructure.Firebase.Repositories;
+
+// Core katmaný için gerekli namespace'ler
 using CELERATE.API.CORE.Interfaces;
-using CELERATE.API.Application.Mappings;
-using Google.Api;
-using Google.Cloud.Firestore;
+using CELERATE.API.CORE.Entities;
+
+// MediatR için namespace
+using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -130,13 +136,20 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("SpendBalance", policy => policy.RequireClaim("Permission", "SpendBalance"));
 });
 
-// Add MediatR - AddBalanceCommand tipini doðru þekilde belirtin
+// MediatR'ý doðru þekilde yapýlandýrma (tüm handler'larý bulabilmesi için)
 builder.Services.AddMediatR(cfg =>
 {
-    cfg.RegisterServicesFromAssembly(typeof(CELERATE.API.Application.Commands.AddBalanceCommand).Assembly);
+    // Application assembly'sini tarayarak tüm handler'larý otomatik olarak kaydet
+    cfg.RegisterServicesFromAssembly(typeof(CreateCardCommand).Assembly);
 });
 
-// AutoMapper'ý manuel olarak yapýlandýrma (çakýþmalarý önlemek için)
+// ÖNEMLÝ: MediatR handler'larýný manuel olarak kaydetme (sorun yaþanan handler için)
+builder.Services.AddTransient<IRequestHandler<CreateAuthorizedCardCommand, string>, CreateAuthorizedCardHandler>();
+builder.Services.AddTransient<IRequestHandler<CreateCardCommand, string>, CreateCardHandler>();
+builder.Services.AddTransient<IRequestHandler<AddBalanceCommand, decimal>, AddBalanceHandler>();
+builder.Services.AddTransient<IRequestHandler<AuthenticateByCardCommand, CELERATE.API.Application.Models.AuthenticationResult>, AuthenticateByCardHandler>();
+
+// AutoMapper'ý yapýlandýrma
 var mapperConfig = new MapperConfiguration(mc =>
 {
     mc.AddProfile(new MappingProfile());
@@ -148,16 +161,16 @@ builder.Services.AddSingleton(mapper);
 // Add SignalR
 builder.Services.AddSignalR();
 
-// Add Firebase services
+// Add Firebase services 
 builder.Services.AddFirebaseServices(builder.Configuration);
 
-// Add JWT Token Generator - Tam namespace kullanýn
-builder.Services.AddScoped<CELERATE.API.CORE.Interfaces.IJwtTokenGenerator, CELERATE.API.Infrastructure.Firebase.JwtTokenGenerator>();
+// Add JWT Token Generator
+builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
-// Add Logging Service - Tam namespace kullanýn
-builder.Services.AddScoped<CELERATE.API.Infrastructure.Firebase.Logging.LoggingService>();
+// Add Logging Service
+builder.Services.AddScoped<LoggingService>();
 
-// Add INotificationService ve Hub implementasyonu - ÖNEMLÝ: NotificationHub singleton olarak kayýtlý olmalýdýr!
+// Add INotificationService ve Hub implementasyonu
 builder.Services.AddSingleton<INotificationService, NotificationHub>();
 
 var app = builder.Build();
@@ -178,16 +191,19 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("AllowedOrigins");
 
+// Özel middlewares
 app.UseMiddleware<FirebaseAuthMiddleware>();
-
 app.UseMiddleware<SecurityMiddleware>();
 
+// Authentication ve Authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Controller ve SignalR yapýlandýrmasý
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 
+// Aspire service defaults endpoints
 app.MapDefaultEndpoints();
 
 app.Run();
